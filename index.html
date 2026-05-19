@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Studio Set Go Pro Prototype</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--primary:#5b6cff;--ok:#0f9d58;--warn:#f59e0b;--bad:#ef4444;--border:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:260px 1fr;height:100vh}.sidebar{background:#fff;border-right:1px solid var(--border);padding:16px;overflow:auto}
+.brand{font-weight:700;font-size:18px}.sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.menu button,.tabs button,.chip{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 10px;margin:4px 0;cursor:pointer;width:100%;text-align:left}
+.menu button.active,.tabs button.active{background:#eef0ff;border-color:#c7ceff;color:#3442c3}
+.main{padding:16px;overflow:auto}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+select,input,textarea{padding:8px;border:1px solid var(--border);border-radius:8px}.grid{display:grid;gap:12px}.kpi{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}.helper{font-size:12px;color:var(--muted);margin:8px 0}
+.table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid var(--border);padding:8px;vertical-align:top}th{color:#374151;background:#fafafa}
+.badge{padding:3px 8px;border-radius:999px;font-size:11px;color:#fff;display:inline-block}.Pending,.Draft,.Need{background:var(--warn)}.Paid,.Delivered,.Reviewed,.Ready,.Accepted,.Balanced{background:var(--ok)}.Overdue,.Failed,.Declined,.High{background:var(--bad)}.Partial,.Submitted,.Low{background:#6366f1}
+.btn{border:none;background:var(--primary);color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer}.btn.alt{background:#fff;color:#111;border:1px solid var(--border)}
+.actions{display:flex;flex-wrap:wrap;gap:6px}.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.tabs button{width:auto}
+.modal,.drawer{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;z-index:99}.modal .box{width:min(760px,90vw);max-height:85vh;overflow:auto;background:#fff;padding:16px;border-radius:12px}
+.drawer .box{position:absolute;right:0;top:0;height:100%;width:min(420px,92vw);background:#fff;padding:16px;overflow:auto}
+.toast{position:fixed;right:16px;bottom:16px;background:#111;color:#fff;padding:10px 14px;border-radius:10px;display:none;z-index:100}
+.small{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app"><aside class="sidebar"><div class="brand">Studio Set Go Pro</div><div class="sub">Rhythm House Studio · INR · Cashfree + Chakra</div><div><label>Mode</label><select id="mode"><option>Owner/Admin</option><option>Instructor</option></select></div><div id="menu" class="menu"></div></aside><main class="main"><div class="top"><h2 id="title"></h2><div class="actions"><button class="btn alt" onclick="showToast('Instructors only see their assigned batches, plans and assessments.')">Help</button></div></div><div id="content"></div></main></div>
+<div id="modal" class="modal"><div class="box" id="modalBody"></div></div><div id="drawer" class="drawer"><div class="box" id="drawerBody"></div></div><div id="toast" class="toast"></div>
+<script>
+const students=['Aanya Sharma','Rohan Mehta','Kiara Iyer','Arjun Nair','Meera Kapoor','Vivaan Reddy','Anika Rao','Ishaan Verma','Tara Singh','Kabir Malhotra','Siya Menon','Advait Joshi','Myra Shah','Reyansh Gupta','Nitya Krishnan'];
+const batches=['Kids Hip Hop','Bollywood Beginners','Zumba Morning Batch','Contemporary Adults','Wedding Choreography Project','Summer Dance Workshop'];
+const branches=['Andheri','Bandra','Powai'];
+let feeRows=students.map((s,i)=>({id:i,student:s,batch:batches[i%6],branch:branches[i%3],period:'May 2026',amount:[1200,1500,1800,2000,2500,5000][i%6],due:'2026-05-'+String((i%20)+8).padStart(2,'0'),status:['Pending','Overdue','Partial','Paid Online'][i%4],mode:['--','Cash','UPI','Cashfree'][i%4],link:['Not Created','Active','Active','Paid'][i%4],reminder:['Not Sent','Sent'][i%2],receipt:['Pending','Generated'][i%2]}));
+let currentMode='Owner/Admin',section='Pro Dashboard',feeTab='Fee Day Mode';
+const ownerMenu=['Pro Dashboard','Smart Fee Automation','WhatsApp Follow-up Queue','Retention Alerts','Students & Batches','Teaching & Progress','Consent Forms','Studio Documents','Instructor Workload','Branch Control','Settings'];
+const instMenu=['Instructor Dashboard','My Batches','Attendance','Class Plans','Student Assessments','Progress Inputs','My Workload','Payment / Voucher History'];
+function badge(v){const c=v.split(' ')[0];return `<span class='badge ${c}'>${v}</span>`}
+function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2400)}
+function openModal(h){const mb=document.getElementById('modalBody');const m=document.getElementById('modal');mb.innerHTML=h+`<div style='margin-top:10px'><button class='btn alt' onclick='closeModal()'>Close</button></div>`;m.style.display='flex'} function closeModal(){document.getElementById('modal').style.display='none'}
+function openDrawer(h){const db=document.getElementById('drawerBody');const d=document.getElementById('drawer');db.innerHTML=h;d.style.display='block'} function closeDrawer(){document.getElementById('drawer').style.display='none'}
+function renderMenu(){const items=currentMode==='Owner/Admin'?ownerMenu:instMenu;document.getElementById('menu').innerHTML=items.map(i=>`<button class='${i===section?'active':''}' onclick="section='${i}';render()">${i}</button>`).join('')}
+function feeActions(i){return `<div class='actions'>
+<button class='btn alt' onclick='feeRows[${i}].link="Active";showToast("Cashfree link active");render()'>Link</button>
+<button class='btn alt' onclick='feeRows[${i}].reminder="Sent";showToast("Reminder sent via Chakra") ;render()'>Remind</button>
+<button class='btn alt' onclick="openModal('<h3>Mark Paid</h3><select id=pm><option>Cash</option><option>Direct UPI</option><option>Bank Transfer</option><option>Cashfree</option></select><button class=btn onclick=&quot;feeRows[${i}].status=\\'Paid Manually\\';feeRows[${i}].mode=document.getElementById(\\'pm\\').value;closeModal();render();showToast(\\'Payment marked\\')&quot;>Save</button>')">Paid</button>
+<button class='btn alt' onclick="openModal('<h3>Partial Payment</h3><input id=pp type=number placeholder=Amount><button class=btn onclick=&quot;feeRows[${i}].status=\\'Partial\\';closeModal();render();showToast(\\'Partial saved. Balance visible.\\')&quot;>Save</button>')">Partial</button>
+<button class='btn alt' onclick="openModal('<h3>Extend Due Date</h3><input id=dd type=date><button class=btn onclick=&quot;feeRows[${i}].due=document.getElementById(\\'dd\\').value;closeModal();render();showToast(\\'Due date extended\\')&quot;>Update</button>')">Extend</button>
+<button class='btn alt' onclick="openModal('<h3>Add Discount</h3><input type=number placeholder=Discount><textarea placeholder=Reason></textarea><button class=btn onclick=&quot;closeModal();showToast(\\'Discount applied\\')&quot;>Apply</button>')">Discount</button>
+<button class='btn alt' onclick='feeRows[${i}].receipt="Generated";render();showToast("Receipt generated")'>Receipt</button>
+<button class='btn alt' onclick="openDrawer('<h3>${feeRows[i].student}</h3><p>Fee history, attendance summary, consent status.</p><p class=small>Cash and direct UPI remain manual so the owner stays in control.</p><button class=btn alt onclick=closeDrawer()>Close</button>')">View</button></div>`}
+function owner(){if(section==='Pro Dashboard') return `<div class='grid kpi'>${[['Expected Collection','₹2,85,000'],['Collected This Month','₹1,92,300'],['Pending Dues','₹92,700'],['Overdue Customers','11'],['Online Payment Success','89%'],['Receipts Pending','7'],['Students at Risk','6'],['Reports Pending','9'],['Consent Pending','5'],['Branch Collection Rate','67%']].map(k=>`<div class=card><div class=small>${k[0]}</div><h3>${k[1]}</h3></div>`).join('')}</div><div class='card'><h3>Today's Work</h3><div class='actions'>${['Open Fee Day Mode','Generate Payment Links','Prepare WhatsApp Reminder Queue','Mark Manual Payment','Generate Receipts','Review Retention Alerts','Generate Progress Reports','Open Branch Dashboard'].map(b=>`<button class='btn alt' onclick="${b.includes('Fee Day')?`section='Smart Fee Automation';feeTab='Fee Day Mode';render()`:`showToast('${b} completed')`}">${b}</button>`).join('')}</div></div>`;
+if(section==='Smart Fee Automation') return `<div class='helper'>Manage today’s dues, payment links, reminders and receipts from one screen.</div><div class='tabs'>${['Fee Day Mode','Fee Groups','Cashfree Payment Links','WhatsApp Send Queue','Payments','Receipts','Collection Reports','Defaulters','Reconciliation'].map(t=>`<button class='${t===feeTab?'active':''}' onclick="feeTab='${t}';render()">${t}</button>`).join('')}</div>${renderFeeTab()}`;
+return `<div class='card'><h3>${section}</h3><p class='helper'>${section==='WhatsApp Follow-up Queue'?'This queue helps the owner complete all follow-ups from one place instead of searching through WhatsApp chats.':''}${section==='Branch Control'?'See collections, attendance and pending work across branches without separate spreadsheets.':''}</p><p>Functional prototype section with actions, previews, status updates and WhatsApp-first utility workflows.</p><div class='actions'><button class='btn alt' onclick='showToast("Preview opened")'>Preview</button><button class='btn alt' onclick='showToast("Sent via Chakra")'>Send WhatsApp</button><button class='btn alt' onclick='showToast("Updated")'>Mark Done</button></div></div>`}
+function renderFeeTab(){if(feeTab==='Fee Day Mode') return `<table class='table'><tr><th>Student</th><th>Batch</th><th>Branch</th><th>Period</th><th>Amount</th><th>Due</th><th>Status</th><th>Mode</th><th>Link</th><th>Reminder</th><th>Receipt</th><th>Actions</th></tr>${feeRows.map((r,i)=>`<tr><td>${r.student}</td><td>${r.batch}</td><td>${r.branch}</td><td>${r.period}</td><td>₹${r.amount}</td><td>${r.due}</td><td>${badge(r.status)}</td><td>${r.mode}</td><td>${r.link}</td><td>${r.reminder}</td><td>${r.receipt}</td><td>${feeActions(i)}</td></tr>`).join('')}</table>`;
+if(feeTab==='Cashfree Payment Links') return `<div class='card'><button class='btn' onclick='feeRows[1].status="Paid Online";feeRows[1].receipt="Generated";showToast("Cashfree webhook received. Payment confirmed and receipt queued.");render()'>Simulate Cashfree Payment Success</button><p class='helper'>Online payments are confirmed automatically when Cashfree sends a webhook.</p></div>`;
+return `<div class='card'><h4>${feeTab}</h4><p>Interactive states, filters, and actions are simulated here.</p><button class='btn alt' onclick='showToast("Action completed")'>Run Action</button></div>`}
+function instructor(){return `<div class='card'><h3>${section}</h3><p class='helper'>Instructors only see their assigned batches, plans and assessments.</p><div class='actions'><button class='btn alt' onclick='section="Attendance";render()'>Mark Attendance</button><button class='btn alt' onclick='section="Class Plans";render()'>Submit Class Plan</button><button class='btn alt' onclick='section="Student Assessments";render()'>Add Assessment</button></div>${section==='Attendance'?`<table class=table><tr><th>Student</th><th>Status</th></tr>${students.slice(0,8).map(s=>`<tr><td>${s}</td><td><select><option>Present</option><option>Absent</option><option>Late</option></select></td></tr>`).join('')}</table><button class=btn onclick="showToast('Attendance submitted to owner.')">Save Attendance</button>`:''}</div>`}
+function render(){currentMode=document.getElementById('mode').value;const items=currentMode==='Owner/Admin'?ownerMenu:instMenu;if(!items.includes(section)) section=items[0];document.getElementById('title').textContent=`${currentMode} · ${section}`;renderMenu();document.getElementById('content').innerHTML=currentMode==='Owner/Admin'?owner():instructor()}
+document.getElementById('mode').onchange=()=>render();window.onclick=e=>{if(e.target.id==='modal')closeModal();if(e.target.id==='drawer')closeDrawer()};render();
+</script>
+</body></html>
